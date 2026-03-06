@@ -1,0 +1,14 @@
+{
+    "name": "yourvendor/smarttolet",
+    "description": "SmartToLet – WordPress property rental plugin",
+    "type": "wordpress-plugin",
+
+    "autoload": {
+        "psr-4": {
+            "SmartToLet\\": "includes/",
+            "SmartToLet\\Admin\\": "admin/",
+            "SmartToLet\\Frontend\\": "frontend/",
+            "SmartToLet\\Common\\": "common/"
+        }
+    }
+}

@@ -39,15 +39,15 @@ class Common {
 
 		
 
-		if ( 'listing-form/fields/map' == $template ) {
-            $template = SMARTTOLET_PATH . 'templates/front/listing-form/fields/map.php';
-             if ( file_exists( $template ) ) {
+		// if ( 'listing-form/fields/map' == $template ) {
+        //     $template = SMARTTOLET_PATH . 'templates/front/listing-form/fields/map.php';
+        //      if ( file_exists( $template ) ) {
 
-                smt_load_template( $template, $args );
+        //         smt_load_template( $template, $args );
                 
-                return false;
-            }
-        }
+        //         return false;
+        //     }
+        // }
 		return $template;
 	}
 }

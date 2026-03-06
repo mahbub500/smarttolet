@@ -1,143 +1,165 @@
-/**
- * SmartToLet – Frontend JavaScript
- * ==========================================================================
- */
-/* global smarttolet, jQuery */
-
-( function ( $, cfg ) {
+(function ($) {
     'use strict';
 
-    // ── AJAX property search ──────────────────────────────────────────────
+    $(document).ready(function () {
 
-    var $searchForm    = $( '#stl-search-form' );
-    var $searchResults = $( '#stl-search-results' );
-    var searchTimer;
+        // Inject floating map button
+        var $mapBtn = $(
+            '<button type="button" id="stl-map-location-btn" title="Use Current Location">' +
+                '<span class="stl-pulse-ring"></span>' +
+                '<span class="stl-pulse-ring stl-pulse-ring--delay"></span>' +
+                '<span class="stl-map-btn-icon">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none">' +
+                        '<circle cx="12" cy="12" r="3.5" fill="currentColor"/>' +
+                        '<circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".4"/>' +
+                        '<line x1="12" y1="2"  x2="12" y2="5"  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+                        '<line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+                        '<line x1="2"  y1="12" x2="5"  y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+                        '<line x1="19" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+                    '</svg>' +
+                '</span>' +
+                '<span class="stl-map-btn-label">My Location</span>' +
+                '<span class="stl-map-btn-status"></span>' +
+            '</button>'
+        );
 
-    $searchForm.on( 'submit', function ( e ) {
-        e.preventDefault();
-        runSearch();
-    } );
+        // Wait for map container
+        var mapCheckInterval = setInterval(function () {
 
-    // Live search on select change.
-    $searchForm.on( 'change', 'select', function () {
-        clearTimeout( searchTimer );
-        searchTimer = setTimeout( runSearch, 400 );
-    } );
+            var $mapContainer = $('#gmap, #osm').first();
 
-    // Debounced keyword input.
-    $searchForm.on( 'input', '#stl-keyword', function () {
-        clearTimeout( searchTimer );
-        searchTimer = setTimeout( runSearch, 600 );
-    } );
-
-    function runSearch() {
-        var data = $searchForm.serializeArray().reduce( function ( acc, item ) {
-            acc[ item.name ] = item.value;
-            return acc;
-        }, {} );
-
-        data.action = 'stl_search';
-        data.nonce  = cfg.nonce;
-
-        $searchResults.html( '<div class="stl-spinner" aria-label="' + cfg.i18n.loading + '"></div>' );
-
-        $.post( cfg.ajax_url, data, function ( res ) {
-            if ( res.success ) {
-                if ( res.data.html ) {
-                    $searchResults.html( '<div class="stl-listings__grid">' + res.data.html + '</div>' );
-                } else {
-                    $searchResults.html( '<p class="stl-listings__empty">' + cfg.i18n.error + '</p>' );
-                }
-            } else {
-                $searchResults.html( '<p class="stl-listings__empty">' + cfg.i18n.error + '</p>' );
+            if ($mapContainer.length) {
+                $mapContainer.css('position', 'relative').append($mapBtn);
+                clearInterval(mapCheckInterval);
             }
-        } ).fail( function () {
-            $searchResults.html( '<p class="stl-listings__empty">' + cfg.i18n.error + '</p>' );
-        } );
-    }
 
-    // ── Enquiry form ──────────────────────────────────────────────────────
+        }, 500);
 
-    $( document ).on( 'click', '#stl-enquiry-submit', function () {
-        var $form = $( '#stl-enquiry-form' );
-        var $msg  = $( '#stl-enquiry-msg' );
-        var $btn  = $( this );
 
-        var name    = $form.find( '#stl-name' ).val().trim();
-        var email   = $form.find( '#stl-email' ).val().trim();
-        var phone   = $form.find( '#stl-phone' ).val().trim();
-        var message = $form.find( '#stl-message' ).val().trim();
-        var pid     = $form.data( 'property' );
+        // Click handler
+        $(document).on('click', '#stl-map-location-btn', function () {
 
-        if ( ! name || ! email ) {
-            showMsg( $msg, 'error', 'Please fill in all required fields.' );
-            return;
+            var $btn    = $(this);
+            var $status = $btn.find('.stl-map-btn-status');
+            var $label  = $btn.find('.stl-map-btn-label');
+
+            // HTTPS check
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                stl_set_status($btn, $status, $label, 'error', '✗ HTTPS required');
+                return;
+            }
+
+            // Browser support
+            if (!navigator.geolocation) {
+                stl_set_status($btn, $status, $label, 'error', '✗ Not supported');
+                return;
+            }
+
+            // Loading state
+            $btn.addClass('stl-locating').prop('disabled', true);
+            $label.text('Detecting...');
+            $status.text('').hide();
+
+            navigator.geolocation.getCurrentPosition(
+
+                // SUCCESS
+                function (position) {
+
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+                    var acc = Math.round(position.coords.accuracy);
+
+                    console.log('[STL Location] lat:', lat, '| lng:', lng, '| accuracy:', acc + 'm');
+
+                    // Fill fields
+                    $('#manual_lat').val(lat).trigger('input change');
+                    $('#manual_lng').val(lng).trigger('input change');
+
+                    // Check manual checkbox
+                    if (!$('#manual_coordinate').is(':checked')) {
+
+                        $('#manual_coordinate')
+                            .prop('checked', true)
+                            .trigger('change click');
+
+                    }
+
+                    // Trigger map update
+                    setTimeout(function () {
+
+                        if ($('#generate_admin_map').length) {
+                            $('#generate_admin_map').trigger('click');
+                        }
+
+                    }, 400);
+
+                    // Success UI
+                    stl_set_status($btn, $status, $label, 'success', '✓ Located');
+
+                    setTimeout(function () {
+
+                        $btn.removeClass('stl-located').prop('disabled', false);
+                        $label.text('My Location');
+                        $status.fadeOut(400);
+
+                    }, 4000);
+
+                },
+
+                // ERROR
+                function (error) {
+
+                    var messages = {
+                        1: '✗ Permission denied',
+                        2: '✗ Position unavailable',
+                        3: '✗ Timed out'
+                    };
+
+                    var msg = messages[error.code] || '✗ Unknown error';
+
+                    console.warn('[STL Location Error]', error.code, error.message);
+
+                    stl_set_status($btn, $status, $label, 'error', msg);
+
+                    setTimeout(function () {
+
+                        $btn.removeClass('stl-error').prop('disabled', false);
+                        $label.text('My Location');
+                        $status.fadeOut(400);
+
+                    }, 5000);
+
+                },
+
+                // Options
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
+
+        });
+
+
+        // UI helper
+        function stl_set_status($btn, $status, $label, type, message) {
+
+            $btn
+                .removeClass('stl-locating stl-located stl-error')
+                .addClass(type === 'success' ? 'stl-located' : type === 'error' ? 'stl-error' : '')
+                .prop('disabled', type !== 'error' && type !== 'success' ? true : false);
+
+            $label.text(type === 'success' ? 'My Location' : message);
+
+            $status
+                .text(message)
+                .removeClass('stl-s--success stl-s--error')
+                .addClass('stl-s--' + type)
+                .stop(true)
+                .show();
         }
 
-        $btn.attr( 'aria-busy', 'true' ).text( cfg.i18n.loading );
-        $msg.hide().removeClass( 'stl--success stl--error' );
+    });
 
-        $.post( cfg.ajax_url, {
-            action      : 'stl_enquiry',
-            nonce       : cfg.nonce,
-            property_id : pid,
-            name        : name,
-            email       : email,
-            phone       : phone,
-            message     : message,
-        }, function ( res ) {
-            if ( res.success ) {
-                showMsg( $msg, 'success', res.data.message || cfg.i18n.enquiry_sent );
-                $form.find( 'input:not([type=hidden]), textarea' ).val( '' );
-            } else {
-                showMsg( $msg, 'error', res.data.message || cfg.i18n.error );
-            }
-        } ).fail( function () {
-            showMsg( $msg, 'error', cfg.i18n.error );
-        } ).always( function () {
-            $btn.attr( 'aria-busy', 'false' ).text( 'Send Enquiry' );
-        } );
-    } );
-
-    function showMsg( $el, type, text ) {
-        $el.text( text )
-           .removeClass( 'stl--success stl--error' )
-           .addClass( 'stl--' + type )
-           .show();
-    }
-
-    // ── Favourite toggle ──────────────────────────────────────────────────
-
-    $( document ).on( 'click', '.stl-favourite', function () {
-        var $btn = $( this );
-        var pid  = $btn.data( 'id' );
-
-        $.post( cfg.ajax_url, {
-            action      : 'stl_toggle_favourite',
-            nonce       : cfg.nonce,
-            property_id : pid,
-        }, function ( res ) {
-            if ( res.success ) {
-                $btn.toggleClass( 'is-saved', res.data.favourited );
-                $btn.text( res.data.favourited ? '♥' : '♡' );
-            }
-        } );
-    } );
-
-    // ── Gallery lightbox (simple swap) ────────────────────────────────────
-
-    $( document ).on( 'click', '.stl-gallery__thumb-img', function () {
-        var $thumb = $( this );
-        var src    = $thumb.attr( 'src' );
-
-        // Swap main image src to higher-res version (data-full if available).
-        var full = $thumb.data( 'full' ) || src;
-
-        var $main = $( '.stl-gallery__main-img' );
-        $main.attr( 'src', full );
-
-        $( '.stl-gallery__thumb-img' ).removeClass( 'is-active' );
-        $thumb.addClass( 'is-active' );
-    } );
-
-} )( jQuery, smarttolet );
+}(jQuery));

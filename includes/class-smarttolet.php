@@ -75,11 +75,9 @@ final class SmartToLet {
 	 */
 	public function init(): void {
 		// Common (both admin + front).
-		Post_Types::get_instance();
-		Taxonomies::get_instance();
+		
 		Assets::get_instance();
-		Shortcodes::get_instance();
-		Ajax::get_instance();
+		
 
 		// Context-specific.
 		if ( is_admin() ) {

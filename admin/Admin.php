@@ -20,11 +20,7 @@ class Admin {
 	private static ?Admin $instance = null;
 
 	private function __construct() {
-		Menu::get_instance();
-		Meta_Boxes::get_instance();
-		Settings::get_instance();
-		Enquiries_Table::get_instance();
-		Columns::get_instance();
+		
 	}
 
 	public static function get_instance(): self {

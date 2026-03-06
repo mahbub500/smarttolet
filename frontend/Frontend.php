@@ -20,8 +20,8 @@ class Frontend {
 	private static ?Frontend $instance = null;
 
 	private function __construct() {
-		Template_Loader::get_instance();
-		Property_Query::get_instance();
+		// Template_Loader::get_instance();
+		// Property_Query::get_instance();
 	}
 
 	public static function get_instance(): self {

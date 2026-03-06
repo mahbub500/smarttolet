@@ -9,6 +9,9 @@
             "SmartToLet\\Admin\\": "admin/",
             "SmartToLet\\Frontend\\": "frontend/",
             "SmartToLet\\Common\\": "common/"
-        }
+        },
+        "files": [
+          "functions.php"
+        ]
     }
 }

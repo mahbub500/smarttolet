@@ -9,11 +9,8 @@ namespace SmartToLet;
 
 use SmartToLet\Admin\Admin;
 use SmartToLet\Frontend\Frontend;
-use SmartToLet\Common\Post_Types;
-use SmartToLet\Common\Taxonomies;
 use SmartToLet\Common\Assets;
-use SmartToLet\Common\Shortcodes;
-use SmartToLet\Common\Ajax;
+use SmartToLet\Common\Common;
 
 // Prevent direct access.
 defined( 'ABSPATH' ) || exit;
@@ -77,6 +74,7 @@ final class SmartToLet {
 		// Common (both admin + front).
 		
 		Assets::get_instance();
+		Common::get_instance();
 		
 
 		// Context-specific.

@@ -89,11 +89,11 @@ final class SmartToLet {
 	 * Plugin activation callback.
 	 */
 	public function activate(): void {
-		Post_Types::get_instance()->register();
+		// Post_Types::get_instance()->register();
 		flush_rewrite_rules();
 
 		// Create default DB tables if needed.
-		Installer::run();
+		// Installer::run();
 	}
 
 	/**

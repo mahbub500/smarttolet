@@ -62,7 +62,7 @@ class Assets {
         wp_enqueue_script(
             'smarttolet-frontend',
             SMARTTOLET_URL . 'frontend/js/frontend.js',
-            [ 'jquery', 'smarttolet-common' ],
+            [ 'jquery', 'smarttolet-common', 'directorist-google-map' ],
             SMARTTOLET_VERSION,
             true
         );
